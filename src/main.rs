@@ -19,15 +19,20 @@ macro_rules! read_mime_prefix {
             "log.entries",
                 ".#(response.content.mimeType%\"", $mime_pfx, "*\")#",
                 "|@this",
-                ".#(response.status==200)#",
+                // ".#(response.status==200)#",
         ));
         
-        dbg!(har.get("#").u64());
         println!("The page {:?} depends on the following {}s:", $link.str(), $media_type);
         for (i, image) in har.array().into_iter().enumerate() {
             let url_guard = image.get("request.url");
             let content = image.get("response.content");
             let (size_numeral, size_unit) = size_formatter(content.get("size").u64());
+            
+            let warns = if image.get("response.status").u32() == 206 {
+                "[PARTIAL] "
+            } else {
+                ""
+            };
             
             let mime = content.get("mimeType").str()
                 .trim_start_matches($mime_pfx).to_uppercase();
@@ -37,7 +42,7 @@ macro_rules! read_mime_prefix {
                 url = "<a data URL>";
             }
             
-            println!("{}. {mime} {} of {size_numeral} {size_unit}, loaded from {url}",
+            println!("{}. {warns}{mime} {} of {size_numeral} {size_unit}, loaded from {url}",
                 i + 1, $media_type);
         }
         println!();
