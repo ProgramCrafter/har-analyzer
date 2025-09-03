@@ -13,6 +13,38 @@ fn size_formatter(bytes: u64) -> (f32, &'static str) {
 }
 
 
+macro_rules! read_mime_prefix {
+    ($input:expr, ($link:expr), $mime_pfx:literal => $media_type:literal) => {{
+        let har = gjson::get(&$input, concat!(
+            "log.entries",
+                ".#(response.content.mimeType%\"", $mime_pfx, "*\")#",
+                "|@this",
+                ".#(response.status==200)#",
+        ));
+        
+        dbg!(har.get("#").u64());
+        println!("The page {:?} depends on the following {}s:", $link.str(), $media_type);
+        for (i, image) in har.array().into_iter().enumerate() {
+            let url_guard = image.get("request.url");
+            let content = image.get("response.content");
+            let (size_numeral, size_unit) = size_formatter(content.get("size").u64());
+            
+            let mime = content.get("mimeType").str()
+                .trim_start_matches($mime_pfx).to_uppercase();
+            
+            let mut url = url_guard.str();
+            if url.starts_with("data:") {
+                url = "<a data URL>";
+            }
+            
+            println!("{}. {mime} {} of {size_numeral} {size_unit}, loaded from {url}",
+                i + 1, $media_type);
+        }
+        println!();
+    }}
+}
+
+
 fn main() {
     use std::io::Read;
     
@@ -21,32 +53,6 @@ fn main() {
     let _ = std::io::stdin().read_to_string(&mut input);
     
     let link = gjson::get(&input, "log.pages.0.title");
-    let har = gjson::get(&input, concat!(
-        "log.entries",
-            ".#(response.content.mimeType%\"image/*\")#",
-            "|@this",
-            ".#(response.status==200)#",
-    ));
-    
-    println!("The page {:?} depends on the following images:", link.str());
-    for (i, image) in har.array().into_iter().enumerate() {
-        let url_guard = image.get("request.url");
-        let content = image.get("response.content");
-        
-        // Important: use u64 because files of our era can easily exceed 4GB.
-        let (size_numeral, size_unit) = size_formatter(content.get("size").u64());
-        
-        let mime = content.get("mimeType").str().trim_start_matches("image/").to_uppercase();
-        
-        // let image_data = content.get("text").str();    must handle encoding though
-        
-        let mut url = url_guard.str();
-        if url.starts_with("data:") {
-            url = "<a data URL>";
-        }
-        
-        println!("{}. {mime} image of {size_numeral} {size_unit}, loaded from {url}",
-            i + 1);
-    }
-    
+    read_mime_prefix!{ input, (link), "image/" => "image" };
+    read_mime_prefix!{ input, (link), "video/" => "video" };
 }
