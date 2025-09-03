@@ -30,7 +30,7 @@ fn main() {
     
     println!("The page {:?} depends on the following images:", link.str());
     for (i, image) in har.array().into_iter().enumerate() {
-        let url = image.get("request.url");
+        let url_guard = image.get("request.url");
         let content = image.get("response.content");
         
         // Important: use u64 because files of our era can easily exceed 4GB.
@@ -40,8 +40,13 @@ fn main() {
         
         // let image_data = content.get("text").str();    must handle encoding though
         
-        println!("{}. {mime} image of {size_numeral} {size_unit}, loaded from {}",
-            i + 1, url.str());
+        let mut url = url_guard.str();
+        if url.starts_with("data:") {
+            url = "<a data URL>";
+        }
+        
+        println!("{}. {mime} image of {size_numeral} {size_unit}, loaded from {url}",
+            i + 1);
     }
     
 }
