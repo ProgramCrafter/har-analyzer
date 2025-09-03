@@ -23,7 +23,7 @@ fn main() {
     let link = gjson::get(&input, "log.pages.0.title");
     let har = gjson::get(&input, concat!(
         "log.entries",
-            ".#(response.content.mimeType=\"image/png\")#",
+            ".#(response.content.mimeType%\"image/*\")#",
             "|@this",
             ".#(response.status==200)#",
     ));
