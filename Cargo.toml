@@ -1,11 +1,11 @@
 [package]
 name = "har-parser"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/ProgramCrafter/har-analyzer"
 authors = ["Ender Ting <pythonhunter146@gmail.com>"]
-description = "Provided a HAR bundle indicating the resources loaded by webpages, shows the images list specifically."
+description = "Provided a HAR bundle indicating the resources loaded by webpages, shows the media list specifically."
 
 [dependencies]
 gjson = "0.8.1"

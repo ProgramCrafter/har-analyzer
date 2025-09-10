@@ -42,7 +42,10 @@ macro_rules! read_mime_prefix {
         for (i, image) in har.array().into_iter().enumerate() {
             let url_guard = image.get("request.url");
             let content = image.get("response.content");
-            let size_bytes = content.get("size").u64();
+            
+            let mut size = image.get("response.headers.#(name==\"content-length\").value");
+            if !size.exists() { size = content.get("size"); }
+            let size_bytes = size.u64();
             let (size_numeral, size_unit) = size_formatter(size_bytes);
             
             let mut partial = image.get("response.status").u32() == 206;
